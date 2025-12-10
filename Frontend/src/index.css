@@ -1,0 +1,19 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Basic tokens to match Figma look */
+:root {
+  --brand: #0ea5a4; /* teal-500-ish */
+  --muted: #6b7280;
+}
+
+body { @apply bg-gray-50 text-gray-800; }
+
+/* Simple code editor look */
+.code-box {
+  background: #0f172a; /* slate-900 */
+  color: #e6eef6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
+}

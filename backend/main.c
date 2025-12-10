@@ -36,8 +36,13 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
             username = cJSON_GetObjectItem(req_json, "username")->valuestring;
             password = cJSON_GetObjectItem(req_json, "password")->valuestring;
             char *uid = auth_login(username, password);
+            if (!username || !password) {
+                cJSON_Delete(req_json);
+                return (send_simple_status(connection, MHD_HTTP_BAD_REQUEST) == MHD_YES) ? MHD_YES : MHD_NO;
+            }
             if (uid) {
                 cJSON *resp = cJSON_CreateObject();
+                cJSON_AddStringToObject(resp, "username", username);
                 cJSON_AddStringToObject(resp, "user_id", uid);
                 cJSON_AddStringToObject(resp, "message", "Logged in");
                 free(uid);
@@ -46,6 +51,31 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
             }
             cJSON_Delete(req_json);
             return (send_simple_status(connection, MHD_HTTP_UNAUTHORIZED) == MHD_YES) ? MHD_YES : MHD_NO;
+        } else if (strstr(url, "/register")) {
+            username = cJSON_GetObjectItem(req_json, "username")->valuestring;
+            password = cJSON_GetObjectItem(req_json, "password")->valuestring;
+            
+            if (!username || !password) {
+                cJSON_Delete(req_json);
+                return (send_simple_status(connection, MHD_HTTP_BAD_REQUEST) == MHD_YES) ? MHD_YES : MHD_NO;
+            }
+            
+            // Create new user record in teable
+            cJSON *user_fields = cJSON_CreateObject();
+            cJSON_AddStringToObject(user_fields, "username", username);
+            cJSON_AddStringToObject(user_fields, "password", password);
+
+            char *uid=auth_register(username,password);
+
+            if (uid) {
+                cJSON *resp = cJSON_CreateObject();
+                cJSON_AddStringToObject(resp, "message", "User registered successfully");
+                cJSON_Delete(req_json);
+                return (send_json_response(connection, MHD_HTTP_CREATED, resp) == MHD_YES) ? MHD_YES : MHD_NO;
+            } else {
+                cJSON_Delete(req_json);
+                return (send_simple_status(connection, MHD_HTTP_INTERNAL_SERVER_ERROR) == MHD_YES) ? MHD_YES : MHD_NO;
+            }
         } else if (strstr(url, "/submit")) {
             user_id = cJSON_GetObjectItem(req_json, "user_id")->valuestring;
             problem_id = cJSON_GetObjectItem(req_json, "problem_id")->valuestring;
@@ -57,8 +87,6 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
             cJSON_AddStringToObject(fields, "code", code);
             cJSON_AddNumberToObject(fields, "score", jr.score);
             cJSON_AddStringToObject(fields, "status", jr.status);
-            char ts[32]; time_t now = time(NULL); strftime(ts, sizeof(ts), "%Y-%m-%dT%H:%M:%S", localtime(&now));
-            cJSON_AddStringToObject(fields, "timestamp", ts);
             teable_insert(getenv("TEABLE_SUBMISSIONS_BASE_ID"), getenv("TEABLE_SUBMISSIONS_TABLE_ID"), fields);
             cJSON_Delete(fields);
             cJSON *resp = cJSON_CreateObject();
@@ -105,8 +133,10 @@ int main(int argc, char *argv[]) {
     struct MHD_Daemon *daemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, PORT, NULL, NULL,
                                                   &handle_request, NULL, MHD_OPTION_END);
     if (!daemon) return 1;
-    printf("Server running on port %d. Press Enter to quit.\n", PORT);
-    getchar();
+    printf("Server running on port %d\n", PORT);
+    fflush(stdout);
+    // Keep the server running (pause indefinitely)
+    pause();
     MHD_stop_daemon(daemon);
     return 0;
 }

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Backend API server (C/Microhttpd on port 8000)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: competitive-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Teable token and table IDs (set these in your .env)
+      TEABLE_TOKEN: ${TEABLE_TOKEN}
+      TEABLE_USERS_BASE_ID: ${TEABLE_USERS_BASE_ID}
+      TEABLE_USERS_TABLE_ID: ${TEABLE_USERS_TABLE_ID}
+      TEABLE_SUBMISSIONS_BASE_ID: ${TEABLE_SUBMISSIONS_BASE_ID}
+      TEABLE_SUBMISSIONS_TABLE_ID: ${TEABLE_SUBMISSIONS_TABLE_ID}
+    networks:
+      - competitive-network
+    restart: unless-stopped
+
+  # Frontend (React + Vite on port 3000)
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: http://localhost:8000
+    container_name: competitive-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - competitive-network
+    restart: unless-stopped
+
+# Network for inter-service communication
+networks:
+  competitive-network:
+    driver: bridge
