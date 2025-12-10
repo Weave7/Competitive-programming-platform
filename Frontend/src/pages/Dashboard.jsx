@@ -18,9 +18,9 @@ function SubmissionsTable({ items = [] }) {
         <tbody>
           {items.map(row => (
             <tr key={row.id} className="border-t">
-              <td className="p-2 align-top">{row.fields.problem_id}</td>
-              <td className="p-2 align-top">{row.fields.score}</td>
-              <td className="p-2 align-top">{row.fields.status}</td>
+              <td className="p-2 align-top">{row.problem_id}</td>
+              <td className="p-2 align-top">{row.score}</td>
+              <td className="p-2 align-top">{row.status}</td>
             </tr>
           ))}
         </tbody>
@@ -64,10 +64,10 @@ export default function Dashboard() {
             {topScores.map(item => (
               <li key={item.id} className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium">{item.fields.username || 'unknown'}</div>
-                  <div className="text-xs text-slate-500">{item.fields.problem_id}</div>
+                  <div className="text-sm font-medium">{item.username || 'unknown'}</div>
+                  <div className="text-xs text-slate-500">{item.problem_id}</div>
                 </div>
-                <div className="text-lg font-semibold">{item.fields.score}</div>
+                <div className="text-lg font-semibold">{item.score}</div>
               </li>
             ))}
           </ol>
